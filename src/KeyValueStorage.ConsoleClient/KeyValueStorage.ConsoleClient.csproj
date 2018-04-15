@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>netcoreapp2.0</TargetFramework>
+        <RootNamespace>RuslanSh.KeyValueStorage.ConsoleClient</RootNamespace>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="System.Console" Version="4.3.0"/>
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\KeyValueStorage.Core\KeyValueStorage.Core.csproj">
+            <Project>{D151FF90-582D-48BD-AD38-F9A6AB1CC287}</Project>
+            <Name>KeyValueStorage.Core</Name>
+        </ProjectReference>
+    </ItemGroup>
+</Project>

@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>netcoreapp2.0</TargetFramework>
+        <RootNamespace>RuslanSh.KeyValueStorage.BasicHttpServer</RootNamespace>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\KeyValueStorage\KeyValueStorage.csproj">
+            <Project>{E2BDA30A-85A7-4BDD-ADA5-2E195B45FADD}</Project>
+            <Name>KeyValueStorage</Name>
+        </ProjectReference>
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="System.Net.Http" Version="4.3.3"/>
+    </ItemGroup>
+</Project>
