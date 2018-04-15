@@ -10,9 +10,14 @@ namespace RuslanSh.KeyValueStorage.ConsoleClient
 		private static void Main()
 		{
 			Console.WriteLine("Starting server... ");
-			var kvServer = KvServerFactory.Create("localhost", 8080, AppDomain.CurrentDomain.BaseDirectory + "/data");
+			var host = "localhost";
+			var port = 8080;
+			var dataDirectory = AppDomain.CurrentDomain.BaseDirectory + "data\\";
+			var kvServer = KvServerFactory.Create(host, port, dataDirectory);
 			kvServer.Start();
 			Console.WriteLine("Server started.");
+			Console.WriteLine($"Server data directory: {dataDirectory}");
+			Console.WriteLine($"Check \"http://{host}:{port}/status\" for server status.");
 			while (true)
 			{
 			}

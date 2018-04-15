@@ -8,6 +8,9 @@
         <PackageReference Include="System.Console" Version="4.3.0"/>
     </ItemGroup>
     <ItemGroup>
+        <Content Include="kvserver-start.bat" CopyToOutputDirectory="PreserveNewest"/>
+    </ItemGroup>
+    <ItemGroup>
         <ProjectReference Include="..\KeyValueStorage.Core\KeyValueStorage.Core.csproj">
             <Project>{D151FF90-582D-48BD-AD38-F9A6AB1CC287}</Project>
             <Name>KeyValueStorage.Core</Name>

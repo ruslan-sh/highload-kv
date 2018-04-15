@@ -6,7 +6,7 @@ namespace RuslanSh.KeyValueStorage.Core
 	{
 		public static IKvServer Create(string host, int port, string path)
 		{
-			return new KestrelKvServer(host, port, path);
+			return new BasicHttpKvServer(host, port, path);
 		}
 	}
 }

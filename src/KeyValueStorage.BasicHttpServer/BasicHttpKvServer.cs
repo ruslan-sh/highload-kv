@@ -5,12 +5,12 @@ using System.Threading.Tasks;
 
 namespace RuslanSh.KeyValueStorage.BasicHttpServer
 {
-	public class KestrelKvServer : IKvServer
+	public class BasicHttpKvServer : IKvServer
 	{
 		private readonly CancellationTokenSource _cancellationTokenSource;
 		private readonly HttpListener _listener;
 
-		public KestrelKvServer(string host, int port, string dataPath)
+		public BasicHttpKvServer(string host, int port, string dataPath)
 		{
 			_listener = new HttpListener();
 			var prefix = BuildPrefix(host, port);
@@ -56,6 +56,7 @@ namespace RuslanSh.KeyValueStorage.BasicHttpServer
 					context.Response.StatusCode = (int) HttpStatusCode.OK;
 					break;
 				default:
+					await SendResponseText(context, "404 Not Found");
 					context.Response.StatusCode = (int) HttpStatusCode.NotFound;
 					break;
 			}
