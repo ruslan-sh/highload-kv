@@ -31,29 +31,20 @@ namespace RuslanSh.KeyValueStorage.Tests
 			_kvServer.Stop();
 		}
 
-		public async Task<byte[]> GetAsync(string requestPath, string queryString = null)
+		public byte[] Get(string requestPath, string queryString = null)
 		{
-			using (var client = GetClient())
-			{
-				return await client.GetByteArrayAsync(GetUrl(requestPath, queryString));
-			}
+			return SyncRequest(client => client.GetByteArrayAsync(GetUrl(requestPath, queryString)));
 		}
 
-		public async Task<HttpResponseMessage> DeleteAsync(string requestPath, string queryString)
+		public HttpResponseMessage Delete(string requestPath, string queryString)
 		{
-			using (var client = GetClient())
-			{
-				return await client.DeleteAsync(GetUrl(requestPath, queryString));
-			}
+			return SyncRequest(client => client.DeleteAsync(GetUrl(requestPath, queryString)));
 		}
 
-		public async Task<HttpResponseMessage> PostAsync(string requestPath, string queryString,
-			byte[] data)
+		public HttpResponseMessage Post(string requestPath, string queryString, byte[] data)
 		{
-			using (var client = GetClient())
-			{
-				return await client.PostAsync(GetUrl(requestPath, queryString), new ByteArrayContent(data));
-			}
+			return SyncRequest(client =>
+				client.PostAsync(GetUrl(requestPath, queryString), new ByteArrayContent(data)));
 		}
 
 		private static HttpClient GetClient()
@@ -61,12 +52,9 @@ namespace RuslanSh.KeyValueStorage.Tests
 			return new HttpClient {Timeout = TimeSpan.FromSeconds(10)};
 		}
 
-		public async Task<HttpStatusCode> StatusAsync()
+		public HttpStatusCode Status()
 		{
-			using (var client = GetClient())
-			{
-				return (await client.GetAsync(GetUrl("status"))).StatusCode;
-			}
+			return SyncRequest(client => client.GetAsync(GetUrl("status"))).StatusCode;
 		}
 
 		private string GetUrl(string requestPath, string queryString = null)
@@ -76,6 +64,21 @@ namespace RuslanSh.KeyValueStorage.Tests
 			if (!string.IsNullOrWhiteSpace(queryString))
 				statusRequest = $"{statusRequest}?{queryString}";
 			return statusRequest;
+		}
+
+		private T SyncRequest<T>(Func<HttpClient, Task<T>> func)
+		{
+			try
+			{
+				using (var client = GetClient())
+				{
+					return func.Invoke(client).Result;
+				}
+			}
+			catch (AggregateException e)
+			{
+				throw e.InnerException;
+			}
 		}
 	}
 }

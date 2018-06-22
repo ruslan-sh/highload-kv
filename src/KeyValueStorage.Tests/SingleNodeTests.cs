@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Net;
 using System.Net.Http;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace RuslanSh.KeyValueStorage.Tests
@@ -14,16 +13,15 @@ namespace RuslanSh.KeyValueStorage.Tests
 
 		public SingleNodeTests(TestFixture fixture)
 		{
-			_defaultServer = fixture.GetServer();
-			_defaultServer.Start();
+			_defaultServer = fixture.DefaultKvServer;
 		}
 
 		[Fact]
-		public async void EmptyKey_ReturnsBadReques()
+		public void EmptyKey_ReturnsBadReques()
 		{
-			await Assert.ThrowsAsync<HttpRequestException>(async () => await GetAsync(""));
-			Assert.Equal(HttpStatusCode.BadRequest, (await DeleteAsync("")).StatusCode);
-			Assert.Equal(HttpStatusCode.BadRequest, (await UpsertAsync("", new byte[] {0})).StatusCode);
+			Assert.Throws<HttpRequestException>(() => Get(""));
+			Assert.Equal(HttpStatusCode.BadRequest, Delete("").StatusCode);
+			Assert.Equal(HttpStatusCode.BadRequest, Upsert("", new byte[] {0}).StatusCode);
 		}
 
 //		[Fact]
@@ -32,24 +30,22 @@ namespace RuslanSh.KeyValueStorage.Tests
 //		    
 //		}
 
-		private async Task<HttpResponseMessage> UpsertAsync(string key, byte[] value)
+		private HttpResponseMessage Upsert(string key, byte[] value)
 		{
-			return await _defaultServer.PostAsync(_requestPath, $"id={key}", value);
+			return _defaultServer.Post(_requestPath, $"id={key}", value);
 		}
 
-		private async Task<HttpResponseMessage> DeleteAsync(string key)
+		private HttpResponseMessage Delete(string key)
 		{
-			return await _defaultServer.DeleteAsync(_requestPath, $"id={key}");
+			return _defaultServer.Delete(_requestPath, $"id={key}");
 		}
 
-		private async Task<byte[]> GetAsync(string key)
+		private byte[] Get(string key)
 		{
-			return await _defaultServer.GetAsync(_requestPath, $"id={key}");
+			return _defaultServer.Get(_requestPath, $"id={key}");
 		}
 
 		public void Dispose()
-		{
-			_defaultServer.Stop();
-		}
+		{ }
 	}
 }

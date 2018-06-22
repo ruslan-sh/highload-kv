@@ -11,38 +11,35 @@ namespace RuslanSh.KeyValueStorage.Tests
 		public StartStopTest(TestFixture fixture)
 		{
 			_fixture = fixture;
-			_defaultServer = _fixture.GetServer();
-			_defaultServer.Start();
+			_defaultServer = _fixture.DefaultKvServer;
 		}
 
 		public void Dispose()
-		{
-			_defaultServer.Stop();
-		}
+		{ }
 
 		private readonly TestFixture _fixture;
-		private KvServerFixture _defaultServer;
+		private readonly KvServerFixture _defaultServer;
 
 		[Fact]
-		public async void Status_ServerNotStart_ThrowsAnException()
+		public void Status_ServerNotStart_ThrowsAnException()
 		{
-			await Assert.ThrowsAsync<HttpRequestException>(async () => await _fixture.GetServer().StatusAsync());
+			Assert.Throws<HttpRequestException>(() => _fixture.GetServer().Status());
 		}
 
 		[Fact]
-		public async void Status_ServerStarted_ReturnsOk()
+		public void Status_ServerStarted_ReturnsOk()
 		{
-			var result = await _defaultServer.StatusAsync();
+			var result = _defaultServer.Status();
 			Assert.Equal(HttpStatusCode.OK, result);
 		}
 
 		[Fact]
-		public async void Status_ServerStoped_ThrowsAnException()
+		public void Status_ServerStoped_ThrowsAnException()
 		{
 			var server = _fixture.GetServer();
 			server.Start();
 			server.Stop();
-			await Assert.ThrowsAsync<HttpRequestException>(() => server.StatusAsync());
+			Assert.Throws<HttpRequestException>(() => server.Status());
 		}
 	}
 }

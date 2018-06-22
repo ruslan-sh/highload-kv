@@ -17,7 +17,7 @@ namespace RuslanSh.KeyValueStorage.ConsoleClient
 			kvServer.Start();
 			Console.WriteLine("Server started.");
 			Console.WriteLine($"Server data directory: {dataDirectory}");
-			Console.WriteLine($"Check \"http://{host}:{port}/status\" for server status.");
+			Console.WriteLine($"Check 'http://{host}:{port}/status' for server status.");
 			while (true)
 			{
 			}

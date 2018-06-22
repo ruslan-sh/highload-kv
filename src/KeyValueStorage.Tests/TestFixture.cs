@@ -11,17 +11,20 @@ namespace RuslanSh.KeyValueStorage.Tests
 		private static readonly Random _rng = new Random();
 		private readonly string _host = "localhost";
 		private string _path;
-		private List<IKvServer> _kvServersPool = new List<IKvServer>();
+		private readonly List<IKvServer> _kvServersPool = new List<IKvServer>();
+		public readonly KvServerFixture DefaultKvServer; 
 
 		public TestFixture()
 		{
 			InitTempPath();
+			DefaultKvServer = GetServer();
+			DefaultKvServer.Start();
 		}
 
 		public void Dispose()
 		{
 			Directory.Delete(_path);
-			_kvServersPool.ForEach(server => server.Stop());
+			DefaultKvServer.Stop();
 		}
 
 		public KvServerFixture GetServer()

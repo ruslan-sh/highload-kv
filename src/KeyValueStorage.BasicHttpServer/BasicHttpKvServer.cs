@@ -21,28 +21,27 @@ namespace RuslanSh.KeyValueStorage.BasicHttpServer
 
 		public void Start()
 		{
-			lock (_listener)
-			{
-				if (_listener.IsListening)
-					return;
-				_listener.Start();
-				Task.Run(
-					() =>
+			if (_listener.IsListening)
+				return;
+			_listener.Start();
+
+			Task.Run(
+				() =>
+				{
+					while (true)
 					{
-						while (true)
-						{
-							var result = _listener.BeginGetContext(ProcessRequests, _listener);
-							result.AsyncWaitHandle.WaitOne();
-							if (!_listener.IsListening)
-								return;
-						}
-					},
-					_cancellationTokenSource.Token);
-			}
+						var result = _listener.BeginGetContext(ProcessRequests, _listener);
+						result.AsyncWaitHandle.WaitOne();
+						if (!_listener.IsListening)
+							return;
+					}
+				},
+				_cancellationTokenSource.Token);
 		}
 
 		private void ProcessRequests(IAsyncResult ar)
 		{
+			if (!_listener.IsListening) return;
 			var context = _listener.EndGetContext(ar);
 			var requestPath = context.Request.Url.AbsolutePath;
 			switch (requestPath)
@@ -61,13 +60,10 @@ namespace RuslanSh.KeyValueStorage.BasicHttpServer
 
 		public void Stop()
 		{
-			lock (_listener)
-			{
-				if (!_listener.IsListening)
-					return;
-				_listener.Stop();
-				_cancellationTokenSource.Cancel();
-			}
+			if (!_listener.IsListening)
+				return;
+			_listener.Stop();
+			_cancellationTokenSource.Cancel();
 		}
 
 		private string BuildPrefix(string host, int port)
