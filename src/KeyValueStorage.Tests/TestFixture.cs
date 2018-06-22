@@ -1,9 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Net;
-using System.Net.Http;
-using System.Threading.Tasks;
-using RuslanSh.KeyValueStorage.Core;
 
 namespace RuslanSh.KeyValueStorage.Tests
 {
@@ -12,32 +9,32 @@ namespace RuslanSh.KeyValueStorage.Tests
 	public class TestFixture : IDisposable
 	{
 		private static readonly Random _rng = new Random();
-		private readonly string _host;
-		private readonly int _port;
+		private readonly string _host = "localhost";
 		private string _path;
+		private List<IKvServer> _kvServersPool = new List<IKvServer>();
 
 		public TestFixture()
 		{
 			InitTempPath();
-			_host = "localhost";
-			_port = GenerateRandomPort();
-			Server = KvServerFactory.Create(_host, _port, _path);
 		}
-
-		public IKvServer Server { get; }
 
 		public void Dispose()
 		{
 			Directory.Delete(_path);
+			_kvServersPool.ForEach(server => server.Stop());
 		}
 
-		private string GetTestUri()
+		public KvServerFixture GetServer()
 		{
-			return $"http://{_host}:{_port}/";
+			var port = GenerateRandomPort();
+			var server = new KvServerFixture(_host, port, _path);
+			_kvServersPool.Add(server);
+			return server;
 		}
 
 		private int GenerateRandomPort()
 		{
+			// Get port from dynamic ports
 			return _rng.Next(49152, 65535);
 		}
 
@@ -45,15 +42,6 @@ namespace RuslanSh.KeyValueStorage.Tests
 		{
 			_path = $"{Path.GetTempPath()}kvt_{Guid.NewGuid()}";
 			Directory.CreateDirectory(_path);
-		}
-
-		public async Task<HttpStatusCode> CheckServerStatus()
-		{
-			var client = new HttpClient {Timeout = TimeSpan.FromSeconds(10)};
-			var prefix = GetTestUri();
-			var statusRequest = $"{prefix}status";
-			var response = await client.GetAsync(statusRequest);
-			return response.StatusCode;
 		}
 	}
 }

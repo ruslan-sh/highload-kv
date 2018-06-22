@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,37 +8,66 @@ namespace RuslanSh.KeyValueStorage.BasicHttpServer
 {
 	public class BasicHttpKvServer : IKvServer
 	{
-		private readonly CancellationTokenSource _cancellationTokenSource;
 		private readonly HttpListener _listener;
+		private readonly CancellationTokenSource _cancellationTokenSource;
 
 		public BasicHttpKvServer(string host, int port, string dataPath)
 		{
+			_cancellationTokenSource = new CancellationTokenSource();
 			_listener = new HttpListener();
 			var prefix = BuildPrefix(host, port);
 			_listener.Prefixes.Add(prefix);
-			_cancellationTokenSource = new CancellationTokenSource();
 		}
 
 		public void Start()
 		{
-			var cancellationToken = _cancellationTokenSource.Token;
-			_listener.Start();
-			Task.Factory.StartNew(async () =>
+			lock (_listener)
 			{
-				while (true)
-				{
-					var context = await _listener.GetContextAsync();
-					await ProcessRequests(context);
-					if (cancellationToken.IsCancellationRequested)
-						break;
-				}
-			}, cancellationToken);
+				if (_listener.IsListening)
+					return;
+				_listener.Start();
+				Task.Run(
+					() =>
+					{
+						while (true)
+						{
+							var result = _listener.BeginGetContext(ProcessRequests, _listener);
+							result.AsyncWaitHandle.WaitOne();
+							if (!_listener.IsListening)
+								return;
+						}
+					},
+					_cancellationTokenSource.Token);
+			}
+		}
+
+		private void ProcessRequests(IAsyncResult ar)
+		{
+			var context = _listener.EndGetContext(ar);
+			var requestPath = context.Request.Url.AbsolutePath;
+			switch (requestPath)
+			{
+				case "/status":
+					SendResponseText(context, HttpStatusCode.OK, "ONLINE");
+					break;
+				case "/v0/entity":
+					SendResponseText(context, HttpStatusCode.BadRequest, "400 Bad Request");
+					break;
+				default:
+					SendResponseText(context, HttpStatusCode.NotFound, "404 Not Found");
+					break;
+			}
 		}
 
 		public void Stop()
 		{
-			_cancellationTokenSource.Cancel();
-			_listener.Stop();
+			lock (_listener)
+			{
+				if (!_listener.IsListening)
+					return;
+				_listener.Stop();
+				_cancellationTokenSource.Cancel();
+			}
 		}
 
 		private string BuildPrefix(string host, int port)
@@ -45,32 +75,15 @@ namespace RuslanSh.KeyValueStorage.BasicHttpServer
 			return $"http://{host}:{port}/";
 		}
 
-		private async Task ProcessRequests(HttpListenerContext context)
+		private static void SendResponseText(HttpListenerContext context, HttpStatusCode statusCode, string text)
 		{
-			var requestPath = context.Request.Url.AbsolutePath;
-
-			switch (requestPath)
-			{
-				case "/status":
-					await SendResponseText(context, "ONLINE");
-					context.Response.StatusCode = (int) HttpStatusCode.OK;
-					break;
-				default:
-					await SendResponseText(context, "404 Not Found");
-					context.Response.StatusCode = (int) HttpStatusCode.NotFound;
-					break;
-			}
-
-			context.Response.OutputStream.Close();
-		}
-
-		private static async Task SendResponseText(HttpListenerContext context, string text)
-		{
-			var statusResponse = Encoding.UTF8.GetBytes(text);
-			context.Response.ContentLength64 = statusResponse.LongLength;
+			context.Response.StatusCode = (int) statusCode;
 			context.Response.ContentType = "text";
 			context.Response.ContentEncoding = Encoding.UTF8;
-			await context.Response.OutputStream.WriteAsync(statusResponse, 0, statusResponse.Length);
+			var statusResponse = Encoding.UTF8.GetBytes(text);
+			context.Response.ContentLength64 = statusResponse.LongLength;
+			context.Response.OutputStream.Write(statusResponse, 0, statusResponse.Length);
+			context.Response.OutputStream.Close();
 		}
 	}
 }
